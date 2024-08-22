@@ -3,6 +3,8 @@ package com.example.demo.controller;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,5 +47,30 @@ public class interviewController {
 		}
 	}
 
+	@PostMapping(value = "/interview2", consumes = "multipart/form-data")
+	public ResponseEntity<?> getInterview2(
+		@Parameter(name = "file", description = "음성 데이터")
+		@RequestParam(value = "wav file") MultipartFile file) {
+		try {
+			Path tempFile = Files.createTempFile("temp", ".wav");
+
+			file.transferTo(tempFile.toFile());
+
+			String result = interviewService.interview(tempFile.toString());
+
+			byte[] audioData = interviewService.convertTextToSpeech(result);
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+			headers.setContentDispositionFormData("attachment", "interview_response.wav");
+
+			return ResponseEntity.ok()
+				.headers(headers)
+				.body(audioData);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.badRequest().body("Failed to process the file");
+		}
+	}
 
 }

@@ -5,10 +5,10 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copy the Spring Boot jar file into the container
-COPY build/libs/interviewExpert-0.0.1-SNAPSHOT.jar .
+COPY target/demo-0.0.1-SNAPSHOT.jar .
 
 # Expose the port the app runs on
 EXPOSE 8080
 
 # Run the jar file
-ENTRYPOINT ["java", "-jar", "interviewExpert-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "demo-0.0.1-SNAPSHOT.jar"]

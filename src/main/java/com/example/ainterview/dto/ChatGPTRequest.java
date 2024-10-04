@@ -1,9 +1,9 @@
-package com.example.demo.dto;
+package com.example.ainterview.dto;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.demo.entity.Message;
+import com.example.ainterview.entity.Message;
 
 import lombok.Data;
 

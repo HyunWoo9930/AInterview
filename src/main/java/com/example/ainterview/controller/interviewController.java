@@ -1,4 +1,4 @@
-package com.example.demo.controller;
+package com.example.ainterview.controller;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.service.InterviewService;
+import com.example.ainterview.service.InterviewService;
 
 import io.swagger.v3.oas.annotations.Parameter;
 
@@ -28,8 +28,8 @@ public class interviewController {
 
 	private final InterviewService interviewService;
 
-	@PostMapping(value = "/interview", consumes = "multipart/form-data")
-	public ResponseEntity<?> getInterview(
+	@PostMapping(value = "/Pronounce", consumes = "multipart/form-data")
+	public ResponseEntity<?> PronounceCheck(
 		@Parameter(name = "file", description = "음성 데이터")
 		@RequestParam(value = "wav file") MultipartFile file
 	) {
@@ -38,7 +38,7 @@ public class interviewController {
 
 			file.transferTo(tempFile.toFile());
 
-			String result = interviewService.interview(tempFile.toString());
+			String result = interviewService.pronunciationAssessmentContinuousWithFile(tempFile.toString());
 
 			return ResponseEntity.ok().body(result);
 		} catch (Exception e) {
@@ -47,8 +47,8 @@ public class interviewController {
 		}
 	}
 
-	@PostMapping(value = "/interview2", consumes = "multipart/form-data")
-	public ResponseEntity<?> getInterview2(
+	@PostMapping(value = "/interview", consumes = "multipart/form-data")
+	public ResponseEntity<?> getInterview(
 		@Parameter(name = "file", description = "음성 데이터")
 		@RequestParam(value = "wav file") MultipartFile file) {
 		try {

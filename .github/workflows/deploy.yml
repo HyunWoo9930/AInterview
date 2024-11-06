@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Java CI with Maven
 
 # 동작 조건 설정 : main 브랜치에 push 혹은 pull request가 발생할 경우 동작한다.
 on:
@@ -14,36 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # 1. Java 21 세팅
+      # 1. Java 17 세팅
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'zulu'
 
-      ## create application-database.yaml
+      ## create application.properties
       - name: create application.properties file
         run: |
-          mkdir ./src/main/resources
+          mkdir -p ./src/main/resources
           touch ./src/main/resources/application.properties
           echo "${{ secrets.APPLICATION_PROPERTIES }}" >> src/main/resources/application.properties
 
-      ## create firebase-service-key.json
-      - name: create firebase_service_key.json file
-        run: |
-          mkdir ./src/main/resources/firebase
-          touch ./src/main/resources/firebase/firebase_service_key.json
-          echo "${{ secrets.FIREBASE_SERVICE_KEY }}" > src/main/resources/firebase/firebase_service_key.json
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-        shell: bash
-
-      # 2. Spring Boot 애플리케이션 빌드
-      - name: Build with Gradle
-        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-        with:
-          arguments: clean bootJar
+      # 2. Maven을 사용하여 Spring Boot 애플리케이션 빌드
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
       # 3. Docker 이미지 빌드
       - name: docker image build

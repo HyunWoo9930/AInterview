@@ -16,8 +16,8 @@ public class Application {
     @Column(length = 3000)
     private String reason;
 
-    @Column(length = 3000)
-    private String group;
+    @Column(length = 3000, name = "group_name")
+    private String groupName;
 
     @Column(length = 3000)
     private String effort;

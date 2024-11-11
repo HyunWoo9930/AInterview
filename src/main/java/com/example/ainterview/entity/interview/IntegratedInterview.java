@@ -3,10 +3,12 @@ package com.example.ainterview.entity.interview;
 import com.example.ainterview.entity.user.Resume;
 import com.example.ainterview.entity.user.User;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -24,4 +26,9 @@ public class IntegratedInterview {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+    @Getter
+    @Setter
+    @Id
+    private Long id;
+
 }

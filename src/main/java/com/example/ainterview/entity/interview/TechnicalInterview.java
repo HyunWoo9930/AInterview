@@ -1,8 +1,8 @@
 package com.example.ainterview.entity.interview;
 
-
 import com.example.ainterview.entity.user.Resume;
 import com.example.ainterview.entity.user.User;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -11,15 +11,15 @@ import lombok.Getter;
 
 @Entity
 @Getter
-public class TechnicalInterview extends Interview{
+public class TechnicalInterview extends Interview {
 
-    private boolean isCameraOn;
+	private boolean isCameraOn;
 
-    @OneToOne
-    @JoinColumn(name = "resume_id")
-    private Resume resume;
+	@OneToOne
+	@JoinColumn(name = "resume_id")
+	private Resume resume;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+	@ManyToOne
+	@JoinColumn(name = "user_id")
+	private User user;
 }

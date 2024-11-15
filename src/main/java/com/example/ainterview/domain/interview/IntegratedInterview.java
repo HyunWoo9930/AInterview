@@ -1,7 +1,7 @@
-package com.example.ainterview.entity.interview;
+package com.example.ainterview.domain.interview;
 
-import com.example.ainterview.entity.user.Resume;
-import com.example.ainterview.entity.user.User;
+import com.example.ainterview.domain.user.Resume;
+import com.example.ainterview.domain.user.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;

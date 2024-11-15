@@ -1,4 +1,4 @@
-package com.example.ainterview.entity;
+package com.example.ainterview.domain;
 
 public class Word {
 	public String word;

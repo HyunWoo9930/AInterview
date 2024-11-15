@@ -1,4 +1,4 @@
-package com.example.ainterview.entity.user;
+package com.example.ainterview.domain.user;
 
 import jakarta.persistence.*;
 import lombok.Getter;

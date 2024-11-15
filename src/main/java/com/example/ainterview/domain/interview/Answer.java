@@ -1,4 +1,4 @@
-package com.example.ainterview.entity.interview;
+package com.example.ainterview.domain.interview;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -20,8 +20,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.example.ainterview.dto.ChatGPTResponse;
-import com.example.ainterview.entity.Word;
+import com.example.ainterview.domain.ChatGPTResponse;
+import com.example.ainterview.domain.Word;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;

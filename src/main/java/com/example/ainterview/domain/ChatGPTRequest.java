@@ -1,9 +1,7 @@
-package com.example.ainterview.dto;
+package com.example.ainterview.domain;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.example.ainterview.entity.Message;
 
 import lombok.Data;
 

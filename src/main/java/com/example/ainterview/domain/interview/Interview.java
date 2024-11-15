@@ -1,7 +1,6 @@
-package com.example.ainterview.entity.interview;
+package com.example.ainterview.domain.interview;
 
 
-import com.example.ainterview.entity.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;

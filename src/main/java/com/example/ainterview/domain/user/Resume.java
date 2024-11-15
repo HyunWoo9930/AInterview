@@ -1,17 +1,22 @@
-package com.example.ainterview.entity.interview;
+package com.example.ainterview.domain.user;
+
 
 import jakarta.persistence.*;
 import lombok.Getter;
 
 @Entity
 @Getter
-public class Feedback {
+public class Resume {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String name;
+    private String academicAbility;
     private String content;
 
     @OneToOne
-    private Interview interview;
+    @JoinColumn(name = "user_id")
+    private User user;
 }

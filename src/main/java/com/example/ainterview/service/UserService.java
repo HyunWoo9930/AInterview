@@ -1,5 +1,6 @@
 package com.example.ainterview.service;
 
+import com.example.ainterview.dto.SignupRequest;
 import org.springframework.stereotype.Service;
 
 import com.example.ainterview.domain.user.User;
@@ -25,5 +26,18 @@ public class UserService {
     public User findUserByUserId(String userId) {
         return userRepository.findByProviderId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+    }
+
+    public void joinProcess(SignupRequest signupRequest) {
+        if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
+            throw new RuntimeException("중복된 이메일입니다.");
+        }
+
+        User newUser = new User();
+        newUser.setEmail(signupRequest.getEmail());
+        newUser.setName(signupRequest.getName());
+        newUser.setPassword(signupRequest.getPassword());
+        newUser.setGender(signupRequest.getGender());
+        userRepository.save(newUser);
     }
 }

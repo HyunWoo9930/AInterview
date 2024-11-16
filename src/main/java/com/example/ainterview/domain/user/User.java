@@ -28,6 +28,7 @@ public class User {
     private String email;
     private String name;
     private String password;
+    private String gender;
 
     @OneToMany(mappedBy = "user")
     private Set<TechnicalInterview> tInterviews;

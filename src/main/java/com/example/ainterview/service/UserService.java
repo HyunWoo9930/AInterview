@@ -33,7 +33,6 @@ public class UserService {
         if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
             throw new RuntimeException("중복된 이메일입니다.");
         }
-
         User newUser = new User();
         newUser.setEmail(signupRequest.getEmail());
         newUser.setName(signupRequest.getName());
@@ -44,7 +43,7 @@ public class UserService {
 
     public boolean login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new RuntimeException("잘못된 입력입니다."));
+            .orElseThrow(() -> new RuntimeException("잘못된 이메일 또는 비밀번호입니다."));
         return user.getPassword().equals(loginRequest.getPassword());
     }
 

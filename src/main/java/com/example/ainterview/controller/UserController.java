@@ -20,7 +20,10 @@ public class UserController {
   private final UserService userService;
 
   @PostMapping("/signup")
-  public ResponseEntity<String> joinProcess(@RequestBody SignupRequest signupRequest) {
+  public ResponseEntity<String> joinProcess(@RequestBody @Valid SignupRequest signupRequest) {
+    if (signupRequest == null) {
+      return ResponseEntity.badRequest().body("값을 입력해주세요.");
+    }
     log.info("회원가입 email: {}", signupRequest.getEmail());
     userService.joinProcess(signupRequest);
     return ResponseEntity.ok("회원가입이 완료되었습니다.");

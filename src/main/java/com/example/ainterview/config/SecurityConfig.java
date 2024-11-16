@@ -66,7 +66,7 @@ public class SecurityConfig {
                 .successHandler(customSuccessHandler))
 
             .authorizeHttpRequests(request -> request
-                .requestMatchers("/", "/oauth2/**", "/login/**").permitAll()
+                .requestMatchers("/", "/oauth2/**", "/login/**", "/api/user/**").permitAll()
                 .anyRequest().authenticated()
             );
 

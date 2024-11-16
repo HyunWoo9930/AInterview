@@ -1,5 +1,6 @@
 package com.example.ainterview.service;
 
+import com.example.ainterview.dto.LoginRequest;
 import com.example.ainterview.dto.SignupRequest;
 import org.springframework.stereotype.Service;
 
@@ -40,4 +41,11 @@ public class UserService {
         newUser.setGender(signupRequest.getGender());
         userRepository.save(newUser);
     }
+
+    public boolean login(LoginRequest loginRequest) {
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+            .orElseThrow(() -> new RuntimeException("잘못된 입력입니다."));
+        return user.getPassword().equals(loginRequest.getPassword());
+    }
+
 }

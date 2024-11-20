@@ -1,7 +1,7 @@
 package com.example.ainterview.service;
 
-import com.example.ainterview.dto.LoginRequest;
 import com.example.ainterview.dto.SignupRequest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.ainterview.domain.user.User;
@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public User createUser(String userId, String nickname, String image) {
         User newUser = new User();
@@ -36,15 +37,8 @@ public class UserService {
         User newUser = new User();
         newUser.setEmail(signupRequest.getEmail());
         newUser.setName(signupRequest.getName());
-        newUser.setPassword(signupRequest.getPassword());
+        newUser.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
         newUser.setGender(signupRequest.getGender());
         userRepository.save(newUser);
     }
-
-    public boolean login(LoginRequest loginRequest) {
-        User user = userRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new RuntimeException("잘못된 이메일 또는 비밀번호입니다."));
-        return user.getPassword().equals(loginRequest.getPassword());
-    }
-
 }

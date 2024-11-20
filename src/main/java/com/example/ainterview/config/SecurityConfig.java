@@ -1,9 +1,13 @@
 package com.example.ainterview.config;
 
+import com.example.ainterview.utils.LoginFilter;
 import java.util.Arrays;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,6 +25,7 @@ import com.example.ainterview.utils.CustomSuccessHandler;
 import com.example.ainterview.utils.JwtFilter;
 import com.example.ainterview.utils.JwtUtil;
 
+
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -30,6 +35,8 @@ public class SecurityConfig {
 
     private final OAuth2UserService oauth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final JwtUtil jwtUtil;
 
     // CORS 설정
     @Bean
@@ -68,9 +75,21 @@ public class SecurityConfig {
             .authorizeHttpRequests(request -> request
                 .requestMatchers("/", "/oauth2/**", "/login/**", "/api/user/**").permitAll()
                 .anyRequest().authenticated()
-            );
+            )
+
+            .addFilterBefore(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }
 

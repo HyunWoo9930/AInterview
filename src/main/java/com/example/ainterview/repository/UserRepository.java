@@ -8,4 +8,5 @@ import com.example.ainterview.domain.user.User;
 
 public interface UserRepository extends JpaRepository<User, String> {
 	Optional<User> findByProviderId(String id);
+	Optional<User> findByEmail(String email);
 }

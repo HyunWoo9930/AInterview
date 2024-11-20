@@ -1,5 +1,6 @@
 package com.example.ainterview.service;
 
+import com.example.ainterview.domain.user.User.Gender;
 import com.example.ainterview.dto.SignupRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,10 +36,11 @@ public class UserService {
             throw new RuntimeException("중복된 이메일입니다.");
         }
         User newUser = new User();
+        Gender gender = Gender.valueOf(signupRequest.getGender().toUpperCase());
         newUser.setEmail(signupRequest.getEmail());
         newUser.setName(signupRequest.getName());
         newUser.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
-        newUser.setGender(signupRequest.getGender());
+        newUser.setGender(gender);
         userRepository.save(newUser);
     }
 }

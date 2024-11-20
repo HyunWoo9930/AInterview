@@ -4,6 +4,7 @@ package com.example.ainterview.domain.user;
 import com.example.ainterview.domain.interview.CommonInterview;
 import com.example.ainterview.domain.interview.IntegratedInterview;
 import com.example.ainterview.domain.interview.TechnicalInterview;
+import com.nimbusds.openid.connect.sdk.claims.Gender;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +29,9 @@ public class User {
     private String email;
     private String name;
     private String password;
-    private String gender;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
 
     @OneToMany(mappedBy = "user")
     private Set<TechnicalInterview> tInterviews;
@@ -41,4 +44,8 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private Set<Application> applications;
+
+    public enum Gender {
+        F, M
+    }
 }

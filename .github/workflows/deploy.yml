@@ -67,5 +67,5 @@ jobs:
         run: sudo docker run --name ainterview --rm -d -p 8081:8081 ${{ secrets.DOCKERHUB_USERNAME }}/ainterview
 
       # 4. 미사용 Docker 리소스 정리
-      - name: Prune unused Docker resources
-        run: sudo docker system prune -f
+#      - name: Prune unused Docker resources
+#        run: sudo docker system prune -f

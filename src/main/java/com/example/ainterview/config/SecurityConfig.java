@@ -2,6 +2,7 @@ package com.example.ainterview.config;
 
 import java.util.Arrays;
 
+import com.example.ainterview.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,6 +35,7 @@ public class SecurityConfig {
 	private final CustomSuccessHandler customSuccessHandler;
 	private final AuthenticationConfiguration authenticationConfiguration;
 	private final JwtUtil jwtUtil;
+	private final UserRepository userRepository;
 
 	// CORS 설정
 	@Bean
@@ -60,7 +62,7 @@ public class SecurityConfig {
 			.formLogin(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-			.addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+			.addFilterBefore(new JwtFilter(userRepository, jwtUtil), UsernamePasswordAuthenticationFilter.class)
 
 			//                .oauth2Login(Customizer.withDefaults());
 			.oauth2Login(oauth2 -> oauth2
@@ -70,7 +72,7 @@ public class SecurityConfig {
 				.successHandler(customSuccessHandler))
 
 			.authorizeHttpRequests(request -> request
-				.requestMatchers("/**", "/oauth2/**", "/login/**", "/swagger-ui/**", "/v3/api-docs/**",
+				.requestMatchers("/api/**", "/**", "/oauth2/**", "/login/**", "/swagger-ui/**", "/v3/api-docs/**",
 					"/swagger-resources/**").permitAll()
 				.anyRequest().authenticated()
 			)

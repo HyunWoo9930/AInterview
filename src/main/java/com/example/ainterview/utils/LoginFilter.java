@@ -52,7 +52,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
   protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException {
     log.info("successfulAuthentication called");
     CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-    String email = customUserDetails.getEmail();
+    String email = customUserDetails.getUsername();
     Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
     Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
     GrantedAuthority auth = iterator.next();

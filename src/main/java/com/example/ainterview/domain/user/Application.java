@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Getter
 @Builder
@@ -20,18 +23,21 @@ public class Application {
     private String name;
 
     @Column(length = 3000)
-    private String reason;
+    private String motivation;
 
     @Column(length = 3000)
-    private String groupProject;
+    private String teamwork;
 
     @Column(length = 3000)
     private String effort;
 
     @Column(length = 3000)
-    private String plan;
+    private String aspiration;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "application", fetch = FetchType.EAGER)
+    private Set<ApplicationCustom> applicationCustoms = new HashSet<>();
 }

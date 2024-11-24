@@ -4,7 +4,6 @@ package com.example.ainterview.domain.user;
 import com.example.ainterview.domain.interview.CommonInterview;
 import com.example.ainterview.domain.interview.IntegratedInterview;
 import com.example.ainterview.domain.interview.TechnicalInterview;
-import com.nimbusds.openid.connect.sdk.claims.Gender;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

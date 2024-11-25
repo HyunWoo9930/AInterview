@@ -40,4 +40,18 @@ public class Application {
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<ApplicationCustom> applicationCustoms;
+
+    @Override
+    public String toString() {
+        return "Application{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", motivation='" + motivation + '\'' +
+            ", teamwork='" + teamwork + '\'' +
+            ", effort='" + effort + '\'' +
+            ", aspiration='" + aspiration + '\'' +
+            ", user=" + user +
+            ", applicationCustoms=" + applicationCustoms +
+            '}';
+    }
 }

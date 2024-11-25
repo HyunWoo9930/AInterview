@@ -1,52 +1,36 @@
 package com.example.ainterview.domain.user;
 
-import org.hibernate.mapping.ToOne;
+import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Resume {
-
+public class Questions {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id")
 	private Long id;
 
-	private String name;
-	@Lob
-	private String academicAbility;
-	@Lob
-	private String career;
-	@Lob
-	private String contact;
+	private String question;
+	private LocalDateTime createdAt;
 
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "user_id")
 	private User user;
-
-	@Override
-	public String toString() {
-		return "Resume{" +
-			"id=" + id +
-			", name='" + name + '\'' +
-			", academicAbility='" + academicAbility + '\'' +
-			", career='" + career + '\'' +
-			", contact='" + contact + '\'' +
-			", user=" + user +
-			'}';
-	}
 }

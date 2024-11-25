@@ -20,10 +20,6 @@ public class CustomUserDetails implements UserDetails {
     return user.getId();
   }
 
-  public String getNickname() {
-    return user.getNickname();
-  }
-
   public String getImage() {
     return user.getImage();
   }
@@ -40,14 +36,9 @@ public class CustomUserDetails implements UserDetails {
     return user.getName();
   }
 
-  public String getRole() {
-    return user.getRole();
-  }
-
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     Collection<GrantedAuthority> authorities = new ArrayList<>();
-    authorities.add(() -> user.getRole()); // Lambda for GrantedAuthority
     return authorities;
   }
 

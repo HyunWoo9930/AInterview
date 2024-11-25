@@ -20,10 +20,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;
-    private String providerId;
-    private String nickname;
     private String image;
-    private String role;
     private LocalDateTime createdAt = LocalDateTime.now();
     private String email;
     private String name;

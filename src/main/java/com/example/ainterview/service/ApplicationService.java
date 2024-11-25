@@ -1,5 +1,7 @@
 package com.example.ainterview.service;
 
+import java.util.List;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,9 +11,11 @@ import com.example.ainterview.domain.user.ApplicationCustom;
 import com.example.ainterview.domain.user.Resume;
 import com.example.ainterview.domain.user.ResumeCreateResponse;
 import com.example.ainterview.domain.user.User;
+import com.example.ainterview.dto.CustomUserDetails;
 import com.example.ainterview.dto.request.ApplicationCustomRequest;
 import com.example.ainterview.dto.request.ApplicationRequest;
 import com.example.ainterview.dto.response.ApplicationResponse;
+import com.example.ainterview.dto.response.ResumeGetResponse;
 import com.example.ainterview.repository.ApplicationCustomRepository;
 import com.example.ainterview.repository.ApplicationRepository;
 import com.example.ainterview.repository.ResumeRepository;
@@ -144,9 +148,6 @@ public class ApplicationService {
 	}
 
 	public void saveResume(UserDetails userDetails, ResumeCreateResponse resumeCreateResponse) {
-		User currentMember = getUserByJWT.getCurrentMember();
-		System.out.println("currentMember = " + currentMember);
-
 		User user = userRepository.findByEmail(userDetails.getUsername())
 			.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
 
@@ -156,6 +157,28 @@ public class ApplicationService {
 			.academicAbility(resumeCreateResponse.getAcademicAbility())
 			.career(resumeCreateResponse.getCareer())
 			.user(user).build());
+	}
+
+	public ResumeGetResponse getResume(CustomUserDetails userDetails) {
+		// User user = getUserByJWT.getCurrentMember();
+		User user = userRepository.findByEmail(userDetails.getEmail())
+			.orElseThrow(() -> new RuntimeException("유저가 존재하지 않습니다."));
+		System.out.println("user12 = " + user.getEmail());
+
+		List<ResumeGetResponse> list = resumeRepository.findByUser(user)
+			.stream()
+			.map(resume -> {
+				return
+					ResumeGetResponse.builder()
+						.id(resume.getId())
+						.userId(resume.getUser().getId())
+						.name(resume.getName())
+						.academicAbility(resume.getAcademicAbility())
+						.career(resume.getCareer())
+						.contact(resume.getContact()).build();
+			}).toList();
+		return list.get(0);
+
 	}
 
 }

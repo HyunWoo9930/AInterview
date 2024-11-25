@@ -3,7 +3,9 @@ package com.example.ainterview.service;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
@@ -22,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.ainterview.domain.gpt.ChatGPTResponse;
 import com.example.ainterview.domain.gpt.Word;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
@@ -123,7 +126,7 @@ public class InterviewService {
 		HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 		ChatGPTResponse response = restTemplate.postForObject(apiURL, entity, ChatGPTResponse.class);
 		return response.getChoices().get(0).getMessage().getContent();
-	}//
+	}
 
 	public byte[] convertTextToSpeech(String text) {
 		try {
@@ -340,6 +343,54 @@ public class InterviewService {
 		audioInput.close();
 		recognizer.close();
 		return result;
+	}
+
+	public String getTodayQuestion(String resume, String application) {
+		System.out.println("resume = " + resume);
+		System.out.println("application = " + application);
+
+		RestTemplate restTemplate = new RestTemplate();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.setBearerAuth(secret_key);
+		// JSON 요청 본문 생성
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+
+			// 메시지 배열 생성
+			Map<String, String> systemMessage = new HashMap<>();
+			systemMessage.put("role", "system");
+			systemMessage.put("content",
+				"내가 이력서랑, 지원서를 줄거야. 그러면 넌 그거에 맞춰서 예장 질문을 3개정도 줘야해 그런데 너무 뻔한 질문을 주면 안돼"
+					+ "답변 형식 : { [{\"index\" : 해당 인덱스, \"question\": {예상 질문}}, ]}");
+
+			Map<String, String> userMessage = new HashMap<>();
+			userMessage.put("role", "user");
+			userMessage.put("content", "이력서 : " + resume + "\n 지원서 : " + application);
+
+			List<Map<String, String>> messages = List.of(systemMessage, userMessage);
+
+			// JSON 본문 구성
+			Map<String, Object> requestBodyMap = new HashMap<>();
+			requestBodyMap.put("model", model);
+			requestBodyMap.put("messages", messages);
+			requestBodyMap.put("max_tokens", 1000);
+			requestBodyMap.put("temperature", 1.0);
+
+			// JSON 문자열로 변환
+			String requestBody = objectMapper.writeValueAsString(requestBodyMap);
+
+			HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+			ChatGPTResponse response = restTemplate.postForObject(apiURL, entity, ChatGPTResponse.class);
+
+			System.out.println("response = " + response.getChoices().get(0).getMessage().getContent());
+			return response.getChoices().get(0).getMessage().getContent();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "Error: " + e.getMessage();
+		}
 	}
 
 }

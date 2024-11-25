@@ -22,7 +22,6 @@ public class ApplicationResponse {
     private List<CustomQuestionResponse> customQuestions;
 
     public ApplicationResponse(Application application) {
-        log.info("response 실행");
         this.applicationId = application.getId();
         this.name = application.getName();
         this.motivation = application.getMotivation();

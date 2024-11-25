@@ -60,9 +60,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         //토큰에서 email 획득
         String email = jwtUtil.getUserId(token);
+        System.out.println("email = " + email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
+        System.out.println("user = " + user.getName());
         //UserDetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
@@ -70,35 +72,6 @@ public class JwtFilter extends OncePerRequestFilter {
         Authentication accessToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         //세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(accessToken);
-
-        filterChain.doFilter(request, response);
-
-
-        try {
-
-            // 토큰에서 사용자 정보 획득
-            String userId = jwtUtil.getUserId(token);
-            String role = jwtUtil.getRole(token);
-
-            // OAuth2UserDTO 생성 및 설정
-            OAuth2UserDTO userDTO = new OAuth2UserDTO();
-            userDTO.setUserId(userId);
-            userDTO.setRole(role);
-
-            // CustomOAuth2User 생성
-            CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
-
-            // 스프링 시큐리티 인증 토큰 생성 및 설정
-            Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User, null,
-                    customOAuth2User.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        } catch (Exception e) {
-            // 예외 발생 시 로그 출력 및 인증 정보 제거
-            SecurityContextHolder.clearContext();
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
-            return;
-        }
 
         filterChain.doFilter(request, response);
     }

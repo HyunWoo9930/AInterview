@@ -40,4 +40,18 @@ public class Application {
 
     @OneToMany(mappedBy = "application", fetch = FetchType.EAGER)
     private Set<ApplicationCustom> applicationCustoms = new HashSet<>();
+
+    @Override
+    public String toString() {
+        return "Application{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", motivation='" + motivation + '\'' +
+            ", teamwork='" + teamwork + '\'' +
+            ", effort='" + effort + '\'' +
+            ", aspiration='" + aspiration + '\'' +
+            ", user=" + user +
+            ", applicationCustoms=" + applicationCustoms +
+            '}';
+    }
 }

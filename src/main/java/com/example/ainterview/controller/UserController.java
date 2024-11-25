@@ -1,5 +1,7 @@
 package com.example.ainterview.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ainterview.domain.user.ResumeCreateResponse;
+import com.example.ainterview.dto.CustomUserDetails;
 import com.example.ainterview.dto.SignupRequest;
 import com.example.ainterview.dto.request.ApplicationRequest;
 import com.example.ainterview.dto.response.ApplicationResponse;
+import com.example.ainterview.dto.response.ResumeGetResponse;
 import com.example.ainterview.service.ApplicationService;
 import com.example.ainterview.service.UserService;
 import com.example.ainterview.utils.GetUserByJWT;
@@ -59,10 +63,15 @@ public class UserController {
 		}
 	}
 
-	@PostMapping("/resume")
-	public ResponseEntity<?> saveResume(@AuthenticationPrincipal UserDetails userDetails, @RequestBody
-	ResumeCreateResponse resumeCreateResponse) {
+	@PostMapping("/resume/save")
+	public ResponseEntity<?> saveResume(@AuthenticationPrincipal CustomUserDetails userDetails,
+		@RequestBody ResumeCreateResponse resumeCreateResponse) {
 		applicationService.saveResume(userDetails, resumeCreateResponse);
 		return ResponseEntity.ok("success");
+	}
+
+	@GetMapping("/resume/get")
+	public ResponseEntity<ResumeGetResponse> getResume(@AuthenticationPrincipal CustomUserDetails userDetails) {
+		return ResponseEntity.ok(applicationService.getResume(userDetails));
 	}
 }

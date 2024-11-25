@@ -44,9 +44,6 @@ public class UserService {
         if (userRequest.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
-        if (userRequest.getGender() != null) {
-            user.setGender(userRequest.getGender());
-        }
         userRepository.save(user);
         return new UserResponse(user);
     }

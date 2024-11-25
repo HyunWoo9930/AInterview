@@ -1,6 +1,7 @@
 package com.example.ainterview.controller;
 
-import java.util.List;
+import com.example.ainterview.dto.UserRequest;
+import com.example.ainterview.dto.UserResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -73,5 +75,14 @@ public class UserController {
 	@GetMapping("/resume/get")
 	public ResponseEntity<ResumeGetResponse> getResume(@AuthenticationPrincipal CustomUserDetails userDetails) {
 		return ResponseEntity.ok(applicationService.getResume(userDetails));
+	}
+
+	@PutMapping
+	public ResponseEntity<UserResponse> updateUser(
+			@RequestBody @Valid UserRequest userRequest,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		Long userId = userDetails.getId();
+		UserResponse updatedUser = userService.updateUser(userId, userRequest);
+		return ResponseEntity.ok(updatedUser);
 	}
 }

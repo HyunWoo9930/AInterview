@@ -3,6 +3,8 @@ package com.example.ainterview.controller;
 import com.example.ainterview.domain.user.ResumeCreateResponse;
 import com.example.ainterview.dto.CustomUserDetails;
 import com.example.ainterview.dto.SignupRequest;
+import com.example.ainterview.dto.UserRequest;
+import com.example.ainterview.dto.UserResponse;
 import com.example.ainterview.dto.request.ApplicationRequest;
 import com.example.ainterview.dto.response.ApplicationResponse;
 import com.example.ainterview.dto.response.ResumeGetResponse;
@@ -104,5 +106,14 @@ public class UserController {
 	@GetMapping("/resume/get")
 	public ResponseEntity<ResumeGetResponse> getResume(@AuthenticationPrincipal CustomUserDetails userDetails) {
 		return ResponseEntity.ok(applicationService.getResume(userDetails));
+	}
+
+	@PutMapping
+	public ResponseEntity<UserResponse> updateUser(
+			@RequestBody @Valid UserRequest userRequest,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		Long userId = userDetails.getId();
+		UserResponse updatedUser = userService.updateUser(userId, userRequest);
+		return ResponseEntity.ok(updatedUser);
 	}
 }

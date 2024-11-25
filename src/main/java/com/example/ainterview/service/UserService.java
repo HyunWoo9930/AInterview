@@ -2,6 +2,9 @@ package com.example.ainterview.service;
 
 import com.example.ainterview.domain.user.User.Gender;
 import com.example.ainterview.dto.SignupRequest;
+import com.example.ainterview.dto.UserRequest;
+import com.example.ainterview.dto.UserResponse;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +12,7 @@ import com.example.ainterview.domain.user.User;
 import com.example.ainterview.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,5 +31,20 @@ public class UserService {
         newUser.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
         newUser.setGender(gender);
         userRepository.save(newUser);
+    }
+
+    @Transactional
+    public UserResponse updateUser(Long id, UserRequest userRequest) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("해당 사용자를 찾을 수 없습니다."));
+
+        if (userRequest.getName() != null) {
+            user.setName(userRequest.getName());
+        }
+        if (userRequest.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        }
+        userRepository.save(user);
+        return new UserResponse(user);
     }
 }

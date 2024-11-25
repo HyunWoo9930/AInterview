@@ -1,4 +1,4 @@
-package com.example.ainterview.domain;
+package com.example.ainterview.domain.gpt;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

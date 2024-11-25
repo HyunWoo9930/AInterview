@@ -2,23 +2,23 @@ package com.example.ainterview.config;
 
 import java.util.Arrays;
 
-import com.example.ainterview.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.example.ainterview.repository.UserRepository;
 import com.example.ainterview.utils.CustomSuccessHandler;
 import com.example.ainterview.utils.JwtFilter;
 import com.example.ainterview.utils.JwtUtil;
@@ -31,7 +31,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final OAuth2UserService oauth2UserService;
 	private final CustomSuccessHandler customSuccessHandler;
 	private final AuthenticationConfiguration authenticationConfiguration;
 	private final JwtUtil jwtUtil;
@@ -64,13 +63,11 @@ public class SecurityConfig {
 
 			.addFilterBefore(new JwtFilter(userRepository, jwtUtil), UsernamePasswordAuthenticationFilter.class)
 
-			//                .oauth2Login(Customizer.withDefaults());
-			.oauth2Login(oauth2 -> oauth2
-				.loginPage("/login")
-				.userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
-					.userService(oauth2UserService))
-				.successHandler(customSuccessHandler))
-
+			               .oauth2Login(Customizer.withDefaults())
+			// .oauth2Login(oauth2 -> oauth2
+			// 	.loginPage("/login")
+			// 	.successHandler(customSuccessHandler))
+			//
 			.authorizeHttpRequests(request -> request
 				.requestMatchers("/api/**", "/**", "/oauth2/**", "/login/**", "/swagger-ui/**", "/v3/api-docs/**",
 					"/swagger-resources/**").permitAll()

@@ -22,16 +22,16 @@ public class Application {
 
     private String name;
 
-    @Column(length = 3000)
+    @Lob
     private String motivation;
 
-    @Column(length = 3000)
+    @Lob
     private String teamwork;
 
-    @Column(length = 3000)
+    @Lob
     private String effort;
 
-    @Column(length = 3000)
+    @Lob
     private String aspiration;
 
     @ManyToOne

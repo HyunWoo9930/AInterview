@@ -1,4 +1,4 @@
-package com.example.ainterview.domain;
+package com.example.ainterview.domain.gpt;
 
 public class Word {
 	public String word;

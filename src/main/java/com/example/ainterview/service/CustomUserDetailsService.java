@@ -22,7 +22,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new RuntimeException("User not found"));
     if (user != null) {
-      //UserDetails에 담아서 return하면 AutneticationManager가 검증 함
       return new CustomUserDetails(user);
     }
     return null;

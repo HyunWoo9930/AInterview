@@ -5,6 +5,7 @@ import com.example.ainterview.dto.SignupRequest;
 import com.example.ainterview.dto.UserRequest;
 import com.example.ainterview.dto.UserResponse;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,13 @@ public class UserService {
         newUser.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
         newUser.setGender(gender);
         userRepository.save(newUser);
+    }
+
+    public UserResponse getUserInfo(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("해당 사용자를 찾을 수 없습니다."));
+
+        return new UserResponse(user);
     }
 
     @Transactional

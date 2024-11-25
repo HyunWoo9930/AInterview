@@ -78,4 +78,10 @@ public class UserController {
 		UserResponse updatedUser = userService.updateUser(userId, userRequest);
 		return ResponseEntity.ok(updatedUser);
 	}
+
+	@GetMapping
+	public UserResponse getUserInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
+		Long userId = userDetails.getId();
+		return userService.getUserInfo(userId);
+	}
 }

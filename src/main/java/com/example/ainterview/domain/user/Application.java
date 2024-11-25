@@ -38,6 +38,6 @@ public class Application {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "application", fetch = FetchType.EAGER)
-    private Set<ApplicationCustom> applicationCustoms = new HashSet<>();
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<ApplicationCustom> applicationCustoms;
 }

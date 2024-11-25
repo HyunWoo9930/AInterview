@@ -21,6 +21,8 @@ import com.example.ainterview.utils.GetUserByJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -70,8 +72,75 @@ public class ApplicationService {
 		Application app = applicationRepository.findById(id)
 			.orElseThrow(() -> new RuntimeException("해당 지원서가 존재하지 않습니다."));
 
+		log.info("id {}", id);
 		log.info("app {}", app);
+
 		return new ApplicationResponse(app);
+	}
+
+	public List<ApplicationResponse> getAppList(UserDetails userDetails) {
+		User user = userRepository.findByEmail(userDetails.getUsername())
+				.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
+
+		List<Application> appList = user.getApplications().stream().toList();
+
+		return appList.stream()
+				.map(ApplicationResponse::new)
+				.toList();
+	}
+
+	public String deleteApp(Long id) {
+		Application app = applicationRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("해당 지원서가 존재하지 않습니다."));
+
+		applicationRepository.delete(app);
+
+		return "지원서를 삭제하였습니다.";
+	}
+
+	public String deleteCustomQuestion(Long id) {
+		ApplicationCustom customQuestion = applicationCustomRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("해당 질문이 존재하지 않습니다."));
+
+		applicationCustomRepository.delete(customQuestion);
+
+		return "지원서 추가 항목을 삭제하였습니다.";
+	}
+
+	public String updateApp(Long id, ApplicationRequest request) {
+		Application app = applicationRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("해당 지원서가 존재하지 않습니다."));
+
+
+		List<ApplicationCustom> customs = app.getApplicationCustoms().stream().toList();
+        for (ApplicationCustom customQ : customs) {
+			applicationCustomRepository.delete(customQ);
+        }
+
+        Application application = Application.builder()
+				.id(id)
+				.name(request.getName())
+				.motivation(request.getMotivation())
+				.teamwork(request.getTeamwork())
+				.effort(request.getEffort())
+				.aspiration(request.getAspiration())
+				.build();
+
+
+		if (request.getCustomQuestions() != null) {
+			for (ApplicationCustomRequest customRequest : request.getCustomQuestions()) {
+				ApplicationCustom custom = ApplicationCustom.builder()
+						.question(customRequest.getQuestion())
+						.answer(customRequest.getAnswer())
+						.application(application)
+						.build();
+				applicationCustomRepository.save(custom);
+			}
+		}
+
+		applicationRepository.save(application);
+
+		return "지원서가 수정되었습니다.";
 	}
 
 	public void saveResume(UserDetails userDetails, ResumeCreateResponse resumeCreateResponse) {

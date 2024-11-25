@@ -1,33 +1,26 @@
 package com.example.ainterview.controller;
 
-import com.example.ainterview.dto.UserRequest;
-import com.example.ainterview.dto.UserResponse;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.example.ainterview.domain.user.ResumeCreateResponse;
 import com.example.ainterview.dto.CustomUserDetails;
 import com.example.ainterview.dto.SignupRequest;
+import com.example.ainterview.dto.UserRequest;
+import com.example.ainterview.dto.UserResponse;
 import com.example.ainterview.dto.request.ApplicationRequest;
 import com.example.ainterview.dto.response.ApplicationResponse;
 import com.example.ainterview.dto.response.ResumeGetResponse;
 import com.example.ainterview.service.ApplicationService;
 import com.example.ainterview.service.UserService;
 import com.example.ainterview.utils.GetUserByJWT;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController

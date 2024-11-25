@@ -11,13 +11,13 @@ public class UserResponse {
   private final String name;
   private final String email;
   private final Gender gender;
-  private final LocalDateTime createAt;
+  private final LocalDateTime createdAt;
 
   public UserResponse(User user) {
     this.id = user.getId();
     this.name = user.getName();
     this.email = user.getEmail();
     this.gender = user.getGender();
-    this.createAt = user.getCreatedAt();
+    this.createdAt = user.getCreatedAt();
   }
 }

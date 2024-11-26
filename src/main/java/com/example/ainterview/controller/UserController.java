@@ -1,5 +1,21 @@
 package com.example.ainterview.controller;
 
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.ainterview.domain.user.ResumeCreateResponse;
 import com.example.ainterview.dto.CustomUserDetails;
 import com.example.ainterview.dto.SignupRequest;
@@ -11,22 +27,16 @@ import com.example.ainterview.dto.response.ResumeGetResponse;
 import com.example.ainterview.service.ApplicationService;
 import com.example.ainterview.service.UserService;
 import com.example.ainterview.utils.GetUserByJWT;
+
 import jakarta.validation.Valid;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
+@CrossOrigin(origins = "*")
 public class UserController {
 
 	private final UserService userService;
@@ -69,7 +79,7 @@ public class UserController {
 	}
 
 	@DeleteMapping("/application")
-	public ResponseEntity<String> delApp(@RequestParam(value="applicationId") Long id) {
+	public ResponseEntity<String> delApp(@RequestParam(value = "applicationId") Long id) {
 		try {
 			return ResponseEntity.ok(applicationService.deleteApp(id));
 		} catch (RuntimeException e) {
@@ -78,7 +88,7 @@ public class UserController {
 	}
 
 	@DeleteMapping("/application/question")
-	public ResponseEntity<String> delCustomQuestion(@RequestParam(value="questionId") Long id) {
+	public ResponseEntity<String> delCustomQuestion(@RequestParam(value = "questionId") Long id) {
 		try {
 			return ResponseEntity.ok(applicationService.deleteCustomQuestion(id));
 		} catch (RuntimeException e) {
@@ -88,14 +98,13 @@ public class UserController {
 
 	@PutMapping("/application")
 	public ResponseEntity<?> updateApp(@RequestParam(value = "applicationId") Long id,
-														 @RequestBody ApplicationRequest request) {
+		@RequestBody ApplicationRequest request) {
 		try {
 			return ResponseEntity.ok(applicationService.updateApp(id, request));
 		} catch (RuntimeException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}
-
 
 	@PostMapping("/resume/save")
 	public ResponseEntity<?> saveResume(@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -111,8 +120,8 @@ public class UserController {
 
 	@PutMapping
 	public ResponseEntity<UserResponse> updateUser(
-			@RequestBody @Valid UserRequest userRequest,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
+		@RequestBody @Valid UserRequest userRequest,
+		@AuthenticationPrincipal CustomUserDetails userDetails) {
 		Long userId = userDetails.getId();
 		UserResponse updatedUser = userService.updateUser(userId, userRequest);
 		return ResponseEntity.ok(updatedUser);

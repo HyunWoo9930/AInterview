@@ -27,11 +27,9 @@ public class UserService {
             throw new RuntimeException("중복된 이메일입니다.");
         }
         User newUser = new User();
-        Gender gender = Gender.valueOf(signupRequest.getGender().toUpperCase());
         newUser.setEmail(signupRequest.getEmail());
         newUser.setName(signupRequest.getName());
         newUser.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
-        newUser.setGender(gender);
         userRepository.save(newUser);
     }
 

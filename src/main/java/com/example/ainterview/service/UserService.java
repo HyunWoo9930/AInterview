@@ -14,6 +14,7 @@ import com.example.ainterview.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Service
 @RequiredArgsConstructor
@@ -54,5 +55,9 @@ public class UserService {
         }
         userRepository.save(user);
         return new UserResponse(user);
+    }
+
+    public boolean isEmailDuplicate(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

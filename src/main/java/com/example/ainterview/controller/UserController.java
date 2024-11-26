@@ -12,6 +12,7 @@ import com.example.ainterview.service.ApplicationService;
 import com.example.ainterview.service.UserService;
 import com.example.ainterview.utils.GetUserByJWT;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -121,5 +122,11 @@ public class UserController {
 	public UserResponse getUserInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
 		Long userId = userDetails.getId();
 		return userService.getUserInfo(userId);
+	}
+
+	@GetMapping("/email-check")
+	public ResponseEntity<Boolean> checkEmailDuplicate(@RequestParam String email) {
+		boolean isDuplicate = userService.isEmailDuplicate(email);
+		return ResponseEntity.ok(isDuplicate);
 	}
 }

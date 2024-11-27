@@ -20,7 +20,7 @@ public class SwaggerConfig {
 		server.setUrl("https://ainterview.hyunwoo9930.store"); // HTTPS 도메인
 		server.setDescription("Production Server");
 		Server server2 = new Server();
-		server2.setUrl("http://localhost:8080"); // HTTPS 도메인
+		server2.setUrl("http://localhost:8081"); // HTTPS 도메인
 		server2.setDescription("Develop Server");
 
 		serverList.add(server);

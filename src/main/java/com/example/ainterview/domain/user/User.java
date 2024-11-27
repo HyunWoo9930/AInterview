@@ -41,7 +41,10 @@ public class User {
     @OneToMany(mappedBy = "user")
     private Set<Application> applications;
 
+    @OneToOne(mappedBy = "user")
+    private Resume resume;
+
     public enum Gender {
-        F, M
+        F, M,
     }
 }

@@ -40,7 +40,7 @@ public class ApplicationService {
 	private final ResumeRepository resumeRepository;
 	private final GetUserByJWT getUserByJWT;
 
-	public String saveApplication(UserDetails userDetails, ApplicationRequest request) {
+	public Long saveApplication(UserDetails userDetails, ApplicationRequest request) {
 
 		log.info("username {}", userDetails.getUsername());
 		User user = userRepository.findByEmail(userDetails.getUsername())
@@ -69,7 +69,7 @@ public class ApplicationService {
 
 		applicationRepository.save(application);
 
-		return "지원서가 성공적으로 저장되었습니다.";
+		return application.getId();
 	}
 
 	public ApplicationResponse getApplication(Long id) {

@@ -1,10 +1,6 @@
 package com.example.ainterview.domain.interview;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 @Entity
@@ -18,5 +14,6 @@ public class Answer {
 	private String content;
 
 	@OneToOne
+	@JoinColumn(name = "question_id", nullable = false)
 	private Question question;
 }

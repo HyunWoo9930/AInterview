@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,14 +51,16 @@ public class interviewController {
 
 	@PostMapping(value = "/interview", consumes = "multipart/form-data")
 	public ResponseEntity<?> getInterview(
-		@Parameter(name = "file", description = "음성 데이터")
-		@RequestParam(value = "wav file") MultipartFile file) {
+			@Parameter(name = "file", description = "음성 데이터")
+		@RequestParam(value = "wav file") MultipartFile file,
+			@AuthenticationPrincipal UserDetails userDetails,
+			@RequestParam(value = "interviewId") Long id) {
 		try {
 			Path tempFile = Files.createTempFile("temp", ".wav");
 
 			file.transferTo(tempFile.toFile());
 
-			String result = interviewService.interview(tempFile.toString());
+			String result = interviewService.interview(tempFile.toString(), userDetails, id);
 
 			byte[] audioData = interviewService.convertTextToSpeech(result);
 

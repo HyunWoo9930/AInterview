@@ -1,6 +1,9 @@
 package com.example.ainterview.service;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,21 +12,18 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
-import com.example.ainterview.domain.interview.CommonInterview;
-import com.example.ainterview.domain.interview.IntegratedInterview;
-import com.example.ainterview.domain.interview.Interview;
-import com.example.ainterview.domain.interview.TechnicalInterview;
+import com.example.ainterview.domain.interview.*;
 import com.example.ainterview.domain.user.User;
 import com.example.ainterview.dto.request.InterviewRequest;
 import com.example.ainterview.dto.response.InterviewResponse;
-import com.example.ainterview.repository.InterviewRepository;
-import com.example.ainterview.repository.UserRepository;
+import com.example.ainterview.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +56,7 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import com.microsoft.cognitiveservices.speech.audio.AudioOutputStream;
 import com.microsoft.cognitiveservices.speech.audio.PullAudioOutputStream;
+import org.w3c.dom.Text;
 import org.webjars.NotFoundException;
 
 @Slf4j
@@ -78,56 +79,58 @@ public class InterviewService {
 
 	private final UserRepository userRepository;
 	private final InterviewRepository interviewRepository;
+	private final AnswerRepository answerRepository;
+	private final InterviewQuestionRepository questionRepository;
 
+	
+	// 인터뷰 생성
 	public InterviewResponse createInterview(UserDetails userDetails, InterviewRequest request) {
 		User user = userRepository.findByEmail(userDetails.getUsername())
 				.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
 
 		String type = request.getType();
 
-		switch (type) {
-			case "common" :
-				CommonInterview cInterview = CommonInterview.builder()
-						.isCameraOn(request.getIsCameraOn())
-						.isManyToOne(request.getIsManyToOne())
-						.url(request.getUrl())
-						.user(user)
-						.build();
+		Interview interview;
 
-				interviewRepository.save(cInterview);
-				return new InterviewResponse(cInterview);
-
-			case "Technical" :
-				TechnicalInterview tInterview = TechnicalInterview.builder()
-						.isCameraOn(request.getIsCameraOn())
-						.resume(user.getResume())
-						.user(user)
-						.build();
-
-				interviewRepository.save(tInterview);
-				return new InterviewResponse(tInterview);
-
-			case "Integrated" :
-				IntegratedInterview iInterview = IntegratedInterview.builder()
-						.isCameraOn(request.getIsCameraOn())
-						.isManyToOne(request.getIsManyToOne())
-						.resume(user.getResume())
-						.url(request.getUrl())
-						.user(user)
-						.build();
-
-				interviewRepository.save(iInterview);
-				return new InterviewResponse(iInterview);
-
-			default:
-				throw (new NotFoundException("해당 타입의 인터뷰가 존재하지 않습니다."));
+		if (type.equals("common")) {
+			interview = CommonInterview.builder()
+					.isCameraOn(request.getIsCameraOn())
+					.isManyToOne(request.getIsManyToOne())
+					.url(request.getUrl())
+					.user(user)
+					.build();
+		} else if (type.equals("technical")) {
+			interview = TechnicalInterview.builder()
+					.isCameraOn(request.getIsCameraOn())
+					.resume(user.getResume())
+					.user(user)
+					.build();
+		} else if (type.equals("integrated")) {
+			interview = IntegratedInterview.builder()
+					.isCameraOn(request.getIsCameraOn())
+					.isManyToOne(request.getIsManyToOne())
+					.resume(user.getResume())
+					.url(request.getUrl())
+					.user(user)
+					.build();
+		} else {
+			throw (new NotFoundException("해당 타입의 인터뷰가 존재하지 않습니다."));
 		}
+
+		interviewRepository.save(interview);
+
+		Question question = Question.builder()
+				.content("자기소개 부탁드립니다.")
+				.interview(interview)
+				.build();
+
+		questionRepository.save(question);
+
+		return new InterviewResponse(interview);
 	}
 
-	public String interview(String audioFilePath, UserDetails userDetails, Long id) {
 
-		User user = userRepository.findByEmail(userDetails.getUsername())
-				.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
+	public String interview(String audioFilePath, Long id) {
 
 		Interview interview = interviewRepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("해당 인터뷰가 존재하지 않습니다."));
@@ -144,14 +147,26 @@ public class InterviewService {
 		StringBuilder stringBuilder = new StringBuilder();
 		CountDownLatch latch = new CountDownLatch(1);
 
+		final String[] t = new String[1];
+
 		recognizer.recognized.addEventListener((s, e) -> {
 			if (e.getResult().getReason() == ResultReason.RecognizedSpeech) {
 				System.out.println("Recognized: " + e.getResult().getText());
+				t[0] = e.getResult().getText();
 				stringBuilder.append(e.getResult().getText());
 			} else if (e.getResult().getReason() == ResultReason.NoMatch) {
 				System.out.println("No speech could be recognized.");
 			}
 		});
+
+		int length = interview.getQuestions().size();
+		Question q = interview.getQuestions().get(length - 1);
+		Answer answer = Answer.builder()
+				.content(t[0])
+				.question(q)
+				.build();
+
+		answerRepository.save(answer);
 
 		recognizer.canceled.addEventListener((s, e) -> {
 			System.out.println("Canceled: " + e.getReason());
@@ -175,6 +190,13 @@ public class InterviewService {
 		} catch (InterruptedException ex) {
 			ex.printStackTrace();
 		}
+
+		Question question = Question.builder()
+				.content(stringBuilder.toString())
+				.interview(interview)
+				.build();
+
+		questionRepository.save(question);
 
 		return getInterview(stringBuilder.toString());
 	}
@@ -465,6 +487,33 @@ public class InterviewService {
 			e.printStackTrace();
 			return "Error: " + e.getMessage();
 		}
+	}
+	
+	public Path generateScript(Long interviewId) throws IOException {
+		Interview interview = interviewRepository.findById(interviewId)
+				.orElseThrow(() -> new IllegalArgumentException("해당 인터뷰가 존재하지 않습니다."));
+
+		StringBuilder script = new StringBuilder();
+
+		List<Question> questions = interview.getQuestions();
+		questions.sort((q1, q2) -> q1.getId().compareTo(q2.getId()));
+
+		for (Question question : questions) {
+			script.append("Q: ").append(question.getContent()).append("\n");
+			if (question.getAnswer() != null) {
+				script.append("A: ").append(question.getAnswer().getContent()).append("\n");
+			} else {
+				script.append("A: [No Answer Provided]\n");
+			}
+			script.append("\n");
+		}
+
+		Path filePath = Path.of("interview_scripts", "interview_" + interviewId + ".txt");
+		try (FileWriter writer = new FileWriter(filePath.toFile())) {
+			writer.write(script.toString());
+		}
+
+		return filePath;
 	}
 
 }

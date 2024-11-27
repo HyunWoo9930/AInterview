@@ -1,18 +1,20 @@
 package com.example.ainterview.controller;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.example.ainterview.dto.request.InterviewRequest;
+import com.example.ainterview.dto.response.InterviewResponse;
+import com.example.ainterview.service.PdfService;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.ainterview.service.InterviewService;
@@ -24,11 +26,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 @RequestMapping("/api/interview")
 public class interviewController {
 
-	public interviewController(InterviewService interviewService) {
+	public interviewController(InterviewService interviewService, PdfService pdfService) {
 		this.interviewService = interviewService;
-	}
+        this.pdfService = pdfService;
+    }
 
 	private final InterviewService interviewService;
+	private final PdfService pdfService;
 
 	@PostMapping(value = "/Pronounce", consumes = "multipart/form-data")
 	public ResponseEntity<?> PronounceCheck(
@@ -60,7 +64,7 @@ public class interviewController {
 
 			file.transferTo(tempFile.toFile());
 
-			String result = interviewService.interview(tempFile.toString(), userDetails, id);
+			String result = interviewService.interview(tempFile.toString(), id);
 
 			byte[] audioData = interviewService.convertTextToSpeech(result);
 
@@ -77,4 +81,43 @@ public class interviewController {
 		}
 	}
 
+	@PostMapping("")
+	public ResponseEntity<InterviewResponse> createInterview(@AuthenticationPrincipal UserDetails userDetails,
+															 @RequestBody InterviewRequest request) {
+
+		try {
+			return ResponseEntity.ok(interviewService.createInterview(userDetails, request));
+		} catch (RuntimeException e) {
+			return ResponseEntity.badRequest().build();
+		}
+	}
+
+	@GetMapping("/script")
+	public ResponseEntity<Resource> downloadScript(@RequestParam(value = "interviewId") Long id,
+												   @RequestParam(defaultValue = "txt") String format) {
+		try {
+			Path scriptPath = interviewService.generateScript(id);
+
+			Path filePath;
+			if ("pdf".equalsIgnoreCase(format)) {
+				filePath = pdfService.convertTextToPdf(scriptPath);
+			} else {
+				filePath = scriptPath;
+			}
+
+			Resource resource = new UrlResource(filePath.toUri());
+
+			if (!resource.exists()) {
+				return ResponseEntity.notFound().build();
+			}
+
+			return ResponseEntity.ok()
+					.contentType("pdf".equalsIgnoreCase(format) ? MediaType.APPLICATION_PDF : MediaType.TEXT_PLAIN)
+					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filePath.getFileName())
+					.body(resource);
+
+		} catch (IOException e) {
+			return ResponseEntity.internalServerError().build();
+		}
+	}
 }

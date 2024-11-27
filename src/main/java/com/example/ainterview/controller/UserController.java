@@ -2,6 +2,7 @@ package com.example.ainterview.controller;
 
 import java.util.List;
 
+import net.minidev.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -51,10 +52,15 @@ public class UserController {
 	}
 
 	@PostMapping("/application")
-	public ResponseEntity<String> saveApplication(@AuthenticationPrincipal UserDetails userDetails,
+	public ResponseEntity<?> saveApplication(@AuthenticationPrincipal UserDetails userDetails,
 		@RequestBody ApplicationRequest request) {
 		try {
-			return ResponseEntity.ok(applicationService.saveApplication(userDetails, request));
+			Long id = applicationService.saveApplication(userDetails, request);
+			JSONObject json = new JSONObject();
+			json.put("applicationId", id);
+
+			String jsonStr = json.toJSONString();
+			return ResponseEntity.ok(jsonStr);
 		} catch (RuntimeException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}

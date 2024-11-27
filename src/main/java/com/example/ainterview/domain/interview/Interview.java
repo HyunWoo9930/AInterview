@@ -2,7 +2,11 @@ package com.example.ainterview.domain.interview;
 
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -14,14 +18,14 @@ import java.util.List;
 @Entity
 @Getter
 @EntityListeners(AuditingEntityListener.class)
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Interview {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private int qNumber;
-    private Long costTime; //ms로 저장
 
     @CreatedDate
     @Column(updatable = false)

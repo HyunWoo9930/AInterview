@@ -15,10 +15,23 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
+import com.example.ainterview.domain.interview.CommonInterview;
+import com.example.ainterview.domain.interview.IntegratedInterview;
+import com.example.ainterview.domain.interview.Interview;
+import com.example.ainterview.domain.interview.TechnicalInterview;
+import com.example.ainterview.domain.user.User;
+import com.example.ainterview.dto.request.InterviewRequest;
+import com.example.ainterview.dto.response.InterviewResponse;
+import com.example.ainterview.repository.InterviewRepository;
+import com.example.ainterview.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,8 +56,12 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import com.microsoft.cognitiveservices.speech.audio.AudioOutputStream;
 import com.microsoft.cognitiveservices.speech.audio.PullAudioOutputStream;
+import org.webjars.NotFoundException;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class InterviewService {
 
 	@Value("${openai.model}")
@@ -58,7 +75,64 @@ public class InterviewService {
 	@Value("${openai.speech.service.key}")
 	private String speech_service_key;
 
-	public String interview(String audioFilePath) {
+
+	private final UserRepository userRepository;
+	private final InterviewRepository interviewRepository;
+
+	public InterviewResponse createInterview(UserDetails userDetails, InterviewRequest request) {
+		User user = userRepository.findByEmail(userDetails.getUsername())
+				.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
+
+		String type = request.getType();
+
+		switch (type) {
+			case "common" :
+				CommonInterview cInterview = CommonInterview.builder()
+						.isCameraOn(request.getIsCameraOn())
+						.isManyToOne(request.getIsManyToOne())
+						.url(request.getUrl())
+						.user(user)
+						.build();
+
+				interviewRepository.save(cInterview);
+				return new InterviewResponse(cInterview);
+
+			case "Technical" :
+				TechnicalInterview tInterview = TechnicalInterview.builder()
+						.isCameraOn(request.getIsCameraOn())
+						.resume(user.getResume())
+						.user(user)
+						.build();
+
+				interviewRepository.save(tInterview);
+				return new InterviewResponse(tInterview);
+
+			case "Integrated" :
+				IntegratedInterview iInterview = IntegratedInterview.builder()
+						.isCameraOn(request.getIsCameraOn())
+						.isManyToOne(request.getIsManyToOne())
+						.resume(user.getResume())
+						.url(request.getUrl())
+						.user(user)
+						.build();
+
+				interviewRepository.save(iInterview);
+				return new InterviewResponse(iInterview);
+
+			default:
+				throw (new NotFoundException("해당 타입의 인터뷰가 존재하지 않습니다."));
+		}
+	}
+
+	public String interview(String audioFilePath, UserDetails userDetails, Long id) {
+
+		User user = userRepository.findByEmail(userDetails.getUsername())
+				.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
+
+		Interview interview = interviewRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("해당 인터뷰가 존재하지 않습니다."));
+		
+		
 		String speechSubscriptionKey = speech_secret_key;
 		String serviceRegion = speech_service_key;
 		SpeechConfig speechConfig = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion);

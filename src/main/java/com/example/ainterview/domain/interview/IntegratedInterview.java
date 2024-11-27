@@ -3,19 +3,24 @@ package com.example.ainterview.domain.interview;
 import com.example.ainterview.domain.user.Resume;
 import com.example.ainterview.domain.user.User;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Getter
-public class IntegratedInterview {
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+public class IntegratedInterview extends Interview{
 
-    private boolean isCameraOn;
-    private boolean isManyTooOne;
+    private Boolean isCameraOn;
+    private Boolean isManyToOne;
 
     private String url;
 
@@ -26,9 +31,4 @@ public class IntegratedInterview {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    @Getter
-    @Setter
-    @Id
-    private Long id;
-
 }

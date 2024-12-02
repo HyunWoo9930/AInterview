@@ -6,27 +6,19 @@ import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
-import com.example.ainterview.domain.interview.*;
-import com.example.ainterview.domain.user.User;
-import com.example.ainterview.dto.request.InterviewRequest;
-import com.example.ainterview.dto.response.InterviewResponse;
-import com.example.ainterview.repository.*;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,9 +26,23 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.webjars.NotFoundException;
 
 import com.example.ainterview.domain.gpt.ChatGPTResponse;
 import com.example.ainterview.domain.gpt.Word;
+import com.example.ainterview.domain.interview.Answer;
+import com.example.ainterview.domain.interview.CommonInterview;
+import com.example.ainterview.domain.interview.IntegratedInterview;
+import com.example.ainterview.domain.interview.Interview;
+import com.example.ainterview.domain.interview.Question;
+import com.example.ainterview.domain.interview.TechnicalInterview;
+import com.example.ainterview.domain.user.User;
+import com.example.ainterview.dto.request.InterviewRequest;
+import com.example.ainterview.dto.response.InterviewResponse;
+import com.example.ainterview.repository.AnswerRepository;
+import com.example.ainterview.repository.InterviewQuestionRepository;
+import com.example.ainterview.repository.InterviewRepository;
+import com.example.ainterview.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
@@ -56,8 +62,10 @@ import com.microsoft.cognitiveservices.speech.SpeechSynthesizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import com.microsoft.cognitiveservices.speech.audio.AudioOutputStream;
 import com.microsoft.cognitiveservices.speech.audio.PullAudioOutputStream;
-import org.w3c.dom.Text;
-import org.webjars.NotFoundException;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -76,66 +84,58 @@ public class InterviewService {
 	@Value("${openai.speech.service.key}")
 	private String speech_service_key;
 
-
 	private final UserRepository userRepository;
 	private final InterviewRepository interviewRepository;
 	private final AnswerRepository answerRepository;
 	private final InterviewQuestionRepository questionRepository;
 
-	
 	// 인터뷰 생성
 	public InterviewResponse createInterview(UserDetails userDetails, InterviewRequest request) {
 		User user = userRepository.findByEmail(userDetails.getUsername())
-				.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
+			.orElseThrow(() -> new RuntimeException("해당 유저가 존재하지 않습니다."));
 
 		String type = request.getType();
 
-		Interview interview;
+		Interview interview = switch (type) {
+			case "common" -> CommonInterview.builder()
+				.isCameraOn(request.getIsCameraOn())
+				.isManyToOne(request.getIsManyToOne())
+				.url(request.getUrl())
+				.user(user)
+				.build();
+			case "technical" -> TechnicalInterview.builder()
+				.isCameraOn(request.getIsCameraOn())
+				.resume(user.getResume())
+				.user(user)
+				.build();
+			case "integrated" -> IntegratedInterview.builder()
+				.isCameraOn(request.getIsCameraOn())
+				.isManyToOne(request.getIsManyToOne())
+				.resume(user.getResume())
+				.url(request.getUrl())
+				.user(user)
+				.build();
+			default -> throw (new NotFoundException("해당 타입의 인터뷰가 존재하지 않습니다."));
+		};
 
-		if (type.equals("common")) {
-			interview = CommonInterview.builder()
-					.isCameraOn(request.getIsCameraOn())
-					.isManyToOne(request.getIsManyToOne())
-					.url(request.getUrl())
-					.user(user)
-					.build();
-		} else if (type.equals("technical")) {
-			interview = TechnicalInterview.builder()
-					.isCameraOn(request.getIsCameraOn())
-					.resume(user.getResume())
-					.user(user)
-					.build();
-		} else if (type.equals("integrated")) {
-			interview = IntegratedInterview.builder()
-					.isCameraOn(request.getIsCameraOn())
-					.isManyToOne(request.getIsManyToOne())
-					.resume(user.getResume())
-					.url(request.getUrl())
-					.user(user)
-					.build();
-		} else {
-			throw (new NotFoundException("해당 타입의 인터뷰가 존재하지 않습니다."));
-		}
 
 		interviewRepository.save(interview);
 
 		Question question = Question.builder()
-				.content("자기소개 부탁드립니다.")
-				.interview(interview)
-				.build();
+			.content("자기소개 부탁드립니다.")
+			.interview(interview)
+			.build();
 
 		questionRepository.save(question);
 
 		return new InterviewResponse(interview);
 	}
 
-
 	public String interview(String audioFilePath, Long id) {
 
 		Interview interview = interviewRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("해당 인터뷰가 존재하지 않습니다."));
-		
-		
+			.orElseThrow(() -> new RuntimeException("해당 인터뷰가 존재하지 않습니다."));
+
 		String speechSubscriptionKey = speech_secret_key;
 		String serviceRegion = speech_service_key;
 		SpeechConfig speechConfig = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion);
@@ -162,11 +162,14 @@ public class InterviewService {
 		int length = interview.getQuestions().size();
 		Question q = interview.getQuestions().get(length - 1);
 		Answer answer = Answer.builder()
-				.content(t[0])
-				.question(q)
-				.build();
+			.content(t[0])
+			.question(q)
+			.build();
 
 		answerRepository.save(answer);
+
+		String feedBack = getFeedBack(q.getContent(), answer.getContent());
+		System.out.println("feedBack = " + feedBack);
 
 		recognizer.canceled.addEventListener((s, e) -> {
 			System.out.println("Canceled: " + e.getReason());
@@ -192,9 +195,9 @@ public class InterviewService {
 		}
 
 		Question question = Question.builder()
-				.content(stringBuilder.toString())
-				.interview(interview)
-				.build();
+			.content(stringBuilder.toString())
+			.interview(interview)
+			.build();
 
 		questionRepository.save(question);
 
@@ -488,15 +491,60 @@ public class InterviewService {
 			return "Error: " + e.getMessage();
 		}
 	}
-	
+
+	public String getFeedBack(String question, String answer) {
+		RestTemplate restTemplate = new RestTemplate();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.setBearerAuth(secret_key);
+		// JSON 요청 본문 생성
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+
+			// 메시지 배열 생성
+			Map<String, String> systemMessage = new HashMap<>();
+			systemMessage.put("role", "system");
+			systemMessage.put("content",
+				"내가 면접을 보는데, 면접관이 하는 질문이랑 대답을 너한테 주면, 그 대답에 대한 피드백을 받고싶어."
+					+ "답변 형식 : { \"feedBack\": {예상 질문} }");
+
+			Map<String, String> userMessage = new HashMap<>();
+			userMessage.put("role", "user");
+			userMessage.put("content", "질문 : " + question + "\n 대답 : " + answer);
+
+			List<Map<String, String>> messages = List.of(systemMessage, userMessage);
+
+			// JSON 본문 구성
+			Map<String, Object> requestBodyMap = new HashMap<>();
+			requestBodyMap.put("model", model);
+			requestBodyMap.put("messages", messages);
+			requestBodyMap.put("max_tokens", 1000);
+			requestBodyMap.put("temperature", 1.0);
+
+			// JSON 문자열로 변환
+			String requestBody = objectMapper.writeValueAsString(requestBodyMap);
+
+			HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+			ChatGPTResponse response = restTemplate.postForObject(apiURL, entity, ChatGPTResponse.class);
+
+			System.out.println("response = " + response.getChoices().get(0).getMessage().getContent());
+			return response.getChoices().get(0).getMessage().getContent();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "Error: " + e.getMessage();
+		}
+	}
+
 	public Path generateScript(Long interviewId) throws IOException {
 		Interview interview = interviewRepository.findById(interviewId)
-				.orElseThrow(() -> new IllegalArgumentException("해당 인터뷰가 존재하지 않습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("해당 인터뷰가 존재하지 않습니다."));
 
 		StringBuilder script = new StringBuilder();
 
 		List<Question> questions = interview.getQuestions();
-		questions.sort((q1, q2) -> q1.getId().compareTo(q2.getId()));
+		questions.sort(Comparator.comparing(Question::getId));
 
 		for (Question question : questions) {
 			script.append("Q: ").append(question.getContent()).append("\n");

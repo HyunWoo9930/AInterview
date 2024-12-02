@@ -32,6 +32,7 @@ import com.example.ainterview.domain.gpt.ChatGPTResponse;
 import com.example.ainterview.domain.gpt.Word;
 import com.example.ainterview.domain.interview.Answer;
 import com.example.ainterview.domain.interview.CommonInterview;
+import com.example.ainterview.domain.interview.Feedback;
 import com.example.ainterview.domain.interview.IntegratedInterview;
 import com.example.ainterview.domain.interview.Interview;
 import com.example.ainterview.domain.interview.Question;
@@ -40,6 +41,7 @@ import com.example.ainterview.domain.user.User;
 import com.example.ainterview.dto.request.InterviewRequest;
 import com.example.ainterview.dto.response.InterviewResponse;
 import com.example.ainterview.repository.AnswerRepository;
+import com.example.ainterview.repository.FeedbackRepository;
 import com.example.ainterview.repository.InterviewQuestionRepository;
 import com.example.ainterview.repository.InterviewRepository;
 import com.example.ainterview.repository.UserRepository;
@@ -88,6 +90,7 @@ public class InterviewService {
 	private final InterviewRepository interviewRepository;
 	private final AnswerRepository answerRepository;
 	private final InterviewQuestionRepository questionRepository;
+	private final FeedbackRepository feedBackRepository;
 
 	// 인터뷰 생성
 	public InterviewResponse createInterview(UserDetails userDetails, InterviewRequest request) {
@@ -118,13 +121,9 @@ public class InterviewService {
 			default -> throw (new NotFoundException("해당 타입의 인터뷰가 존재하지 않습니다."));
 		};
 
-
 		interviewRepository.save(interview);
 
-		Question question = Question.builder()
-			.content("자기소개 부탁드립니다.")
-			.interview(interview)
-			.build();
+		Question question = Question.builder().content("자기소개 부탁드립니다.").interview(interview).build();
 
 		questionRepository.save(question);
 
@@ -132,7 +131,6 @@ public class InterviewService {
 	}
 
 	public String interview(String audioFilePath, Long id) {
-
 		Interview interview = interviewRepository.findById(id)
 			.orElseThrow(() -> new RuntimeException("해당 인터뷰가 존재하지 않습니다."));
 
@@ -147,61 +145,57 @@ public class InterviewService {
 		StringBuilder stringBuilder = new StringBuilder();
 		CountDownLatch latch = new CountDownLatch(1);
 
-		final String[] t = new String[1];
-
+		// 음성 데이터 실시간 처리
 		recognizer.recognized.addEventListener((s, e) -> {
 			if (e.getResult().getReason() == ResultReason.RecognizedSpeech) {
 				System.out.println("Recognized: " + e.getResult().getText());
-				t[0] = e.getResult().getText();
-				stringBuilder.append(e.getResult().getText());
+				stringBuilder.append(e.getResult().getText()).append(" ");
 			} else if (e.getResult().getReason() == ResultReason.NoMatch) {
 				System.out.println("No speech could be recognized.");
 			}
 		});
 
-		int length = interview.getQuestions().size();
-		Question q = interview.getQuestions().get(length - 1);
-		Answer answer = Answer.builder()
-			.content(t[0])
-			.question(q)
-			.build();
-
-		answerRepository.save(answer);
-
-		String feedBack = getFeedBack(q.getContent(), answer.getContent());
-		System.out.println("feedBack = " + feedBack);
-
+		// 이벤트 처리 로직 강화
 		recognizer.canceled.addEventListener((s, e) -> {
 			System.out.println("Canceled: " + e.getReason());
 			if (e.getReason() == CancellationReason.Error) {
 				System.out.println("Error details: " + e.getErrorDetails());
 			}
-			recognizer.stopContinuousRecognitionAsync();
 			latch.countDown();
 		});
 
 		recognizer.sessionStopped.addEventListener((s, e) -> {
 			System.out.println("Session stopped.");
-			recognizer.stopContinuousRecognitionAsync();
 			latch.countDown();
 		});
 
 		recognizer.startContinuousRecognitionAsync();
 
 		try {
-			latch.await();
+			latch.await(); // 모든 이벤트 종료 대기
 		} catch (InterruptedException ex) {
 			ex.printStackTrace();
+		} finally {
+			recognizer.close(); // 리소스 해제
 		}
 
-		Question question = Question.builder()
-			.content(stringBuilder.toString())
-			.interview(interview)
+		int length = interview.getQuestions().size();
+		Question q = interview.getQuestions().get(length - 1);
+
+		Answer answer = Answer.builder()
+			.content(stringBuilder.toString().trim())
+			.question(q)
 			.build();
 
-		questionRepository.save(question);
+		String feedBack = getFeedBack(q.getContent(), answer.getContent());
+		feedBackRepository.save(Feedback.builder().interview(interview).content(feedBack).build());
+		// answerRepository.save(answer);
 
-		return getInterview(stringBuilder.toString());
+		String newQuestion = getInterview(stringBuilder.toString());
+		Question question = Question.builder().content(newQuestion).interview(interview).build();
+		// questionRepository.save(question);
+
+		return newQuestion;
 	}
 
 	public String getInterview(String content) {
@@ -211,16 +205,10 @@ public class InterviewService {
 		headers.setBearerAuth(secret_key);
 
 		// 'messages' 필드를 사용하여 메시지 배열을 생성합니다.
-		String requestBody = "{\n" +
-			"  \"model\": \"" + model + "\",\n" +
-			"  \"messages\": [\n" +
-			"    {\"role\": \"system\", \"content\": \"면접관 입장에서 지원자한테 질문을 하는 역할. user가 말하는 내용을 듣고, 추가적인 꼬리질문을 해야한다.\"},\n"
-			+
-			"    {\"role\": \"user\", \"content\": \"" + content + "\"}\n" +
-			"  ],\n" +
-			"  \"max_tokens\": 1000,\n" +
-			"  \"temperature\": 1.0\n" +
-			"}";
+		String requestBody = "{\n" + "  \"model\": \"" + model + "\",\n" + "  \"messages\": [\n"
+			+ "    {\"role\": \"system\", \"content\": \"면접관 입장에서 지원자한테 질문을 하는 역할. user가 말하는 내용을 듣고, 추가적인 꼬리질문을 해야한다.\"},\n"
+			+ "    {\"role\": \"user\", \"content\": \"" + content + "\"}\n" + "  ],\n" + "  \"max_tokens\": 1000,\n"
+			+ "  \"temperature\": 1.0\n" + "}";
 
 		HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 		ChatGPTResponse response = restTemplate.postForObject(apiURL, entity, ChatGPTResponse.class);
@@ -233,10 +221,9 @@ public class InterviewService {
 			SpeechConfig speechConfig = SpeechConfig.fromSubscription(speech_secret_key, speech_service_key);
 			speechConfig.setSpeechSynthesisLanguage("ko-KR");
 
-			String ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='ko-KR'>" +
-				"<voice name='ko-KR-InJoonNeural'>" +
-				"<prosody rate='1.1'>" + text + "</prosody>" +
-				"</voice></speak>";
+			String ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='ko-KR'>"
+				+ "<voice name='ko-KR-InJoonNeural'>" + "<prosody rate='1.1'>" + text + "</prosody>"
+				+ "</voice></speak>";
 
 			PullAudioOutputStream stream = AudioOutputStream.createPullStream();
 			AudioConfig audioConfig = AudioConfig.fromStreamOutput(stream);
@@ -278,12 +265,10 @@ public class InterviewService {
 				if (e.getResult().getReason() == ResultReason.RecognizedSpeech) {
 					System.out.println("RECOGNIZED: Text=" + e.getResult().getText());
 					PronunciationAssessmentResult pronResult = PronunciationAssessmentResult.fromResult(e.getResult());
-					System.out.println(
-						String.format(
-							"    Accuracy score: %f, Prosody score: %f, Pronunciation score: %f, Completeness score : %f, FluencyScore: %f",
-							pronResult.getAccuracyScore(), pronResult.getProsodyScore(),
-							pronResult.getPronunciationScore(),
-							pronResult.getCompletenessScore(), pronResult.getFluencyScore()));
+					System.out.println(String.format(
+						"    Accuracy score: %f, Prosody score: %f, Pronunciation score: %f, Completeness score : %f, FluencyScore: %f",
+						pronResult.getAccuracyScore(), pronResult.getProsodyScore(), pronResult.getPronunciationScore(),
+						pronResult.getCompletenessScore(), pronResult.getFluencyScore()));
 					fluencyScores.add(pronResult.getFluencyScore());
 					prosodyScores.add(pronResult.getProsodyScore());
 
@@ -433,9 +418,9 @@ public class InterviewService {
 			// Calculate whole completeness score
 			double completenessScore = (double)validCount / referenceWords.length * 100;
 			completenessScore = completenessScore <= 100 ? completenessScore : 100;
-			result = "문장 정확도 : " + Math.round(accuracyScore * 100) / 100.0 + ", "
-				+ "완벽도 : " + Math.round(completenessScore * 100) / 100.0 + ", "
-				+ "유창성 : " + Math.round(fluencyScore * 100) / 100.0f;
+			result = "문장 정확도 : " + Math.round(accuracyScore * 100) / 100.0 + ", " + "완벽도 : "
+				+ Math.round(completenessScore * 100) / 100.0 + ", " + "유창성 : "
+				+ Math.round(fluencyScore * 100) / 100.0f;
 			System.out.println(result);
 		}
 		config.close();
@@ -460,9 +445,8 @@ public class InterviewService {
 			// 메시지 배열 생성
 			Map<String, String> systemMessage = new HashMap<>();
 			systemMessage.put("role", "system");
-			systemMessage.put("content",
-				"내가 이력서랑, 지원서를 줄거야. 그러면 넌 그거에 맞춰서 예장 질문을 3개정도 줘야해 그런데 너무 뻔한 질문을 주면 안돼"
-					+ "답변 형식 : { [{\"index\" : 해당 인덱스, \"question\": {예상 질문}}, ]}");
+			systemMessage.put("content", "내가 이력서랑, 지원서를 줄거야. 그러면 넌 그거에 맞춰서 예장 질문을 3개정도 줘야해 그런데 너무 뻔한 질문을 주면 안돼"
+				+ "답변 형식 : { [{\"index\" : 해당 인덱스, \"question\": {예상 질문}}, ]}");
 
 			Map<String, String> userMessage = new HashMap<>();
 			userMessage.put("role", "user");
@@ -506,8 +490,7 @@ public class InterviewService {
 			Map<String, String> systemMessage = new HashMap<>();
 			systemMessage.put("role", "system");
 			systemMessage.put("content",
-				"내가 면접을 보는데, 면접관이 하는 질문이랑 대답을 너한테 주면, 그 대답에 대한 피드백을 받고싶어."
-					+ "답변 형식 : { \"feedBack\": {예상 질문} }");
+				"내가 면접을 보는데, 면접관이 하는 질문이랑 대답을 너한테 주면, 그 대답에 대한 피드백을 받고싶어." + "답변 형식 : { \"feedBack\": {예상 질문} }");
 
 			Map<String, String> userMessage = new HashMap<>();
 			userMessage.put("role", "user");
@@ -528,7 +511,6 @@ public class InterviewService {
 			HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 			ChatGPTResponse response = restTemplate.postForObject(apiURL, entity, ChatGPTResponse.class);
 
-			System.out.println("response = " + response.getChoices().get(0).getMessage().getContent());
 			return response.getChoices().get(0).getMessage().getContent();
 
 		} catch (Exception e) {

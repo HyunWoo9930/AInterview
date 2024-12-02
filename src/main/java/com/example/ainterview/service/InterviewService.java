@@ -31,8 +31,8 @@ import org.webjars.NotFoundException;
 import com.example.ainterview.domain.gpt.ChatGPTResponse;
 import com.example.ainterview.domain.gpt.Word;
 import com.example.ainterview.domain.interview.Answer;
+import com.example.ainterview.domain.interview.AnswerFeedback;
 import com.example.ainterview.domain.interview.CommonInterview;
-import com.example.ainterview.domain.interview.Feedback;
 import com.example.ainterview.domain.interview.IntegratedInterview;
 import com.example.ainterview.domain.interview.Interview;
 import com.example.ainterview.domain.interview.Question;
@@ -40,6 +40,7 @@ import com.example.ainterview.domain.interview.TechnicalInterview;
 import com.example.ainterview.domain.user.User;
 import com.example.ainterview.dto.request.InterviewRequest;
 import com.example.ainterview.dto.response.InterviewResponse;
+import com.example.ainterview.repository.AnswerFeedbackRepository;
 import com.example.ainterview.repository.AnswerRepository;
 import com.example.ainterview.repository.FeedbackRepository;
 import com.example.ainterview.repository.InterviewQuestionRepository;
@@ -91,6 +92,7 @@ public class InterviewService {
 	private final AnswerRepository answerRepository;
 	private final InterviewQuestionRepository questionRepository;
 	private final FeedbackRepository feedBackRepository;
+	private final AnswerFeedbackRepository answerFeedbackRepository;
 
 	// 인터뷰 생성
 	public InterviewResponse createInterview(UserDetails userDetails, InterviewRequest request) {
@@ -183,17 +185,18 @@ public class InterviewService {
 		Question q = interview.getQuestions().get(length - 1);
 
 		Answer answer = Answer.builder()
-			.content(stringBuilder.toString().trim())
+			.content(stringBuilder.toString())
 			.question(q)
 			.build();
 
 		String feedBack = getFeedBack(q.getContent(), answer.getContent());
-		feedBackRepository.save(Feedback.builder().interview(interview).content(feedBack).build());
-		// answerRepository.save(answer);
 
-		String newQuestion = getInterview(stringBuilder.toString());
+		answerFeedbackRepository.save(AnswerFeedback.builder().answer(answer).content(feedBack).build());
+		answerRepository.save(answer);
+
+		String newQuestion = getInterview(answer.getContent());
 		Question question = Question.builder().content(newQuestion).interview(interview).build();
-		// questionRepository.save(question);
+		questionRepository.save(question);
 
 		return newQuestion;
 	}

@@ -17,6 +17,7 @@ public class Answer {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Lob
 	private String content;
 
 	@OneToOne

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.ainterview.service.InterviewService;
+import com.example.ainterview.utils.VideoToAudioConverter;
 
 import io.swagger.v3.oas.annotations.Parameter;
 
@@ -28,8 +29,8 @@ public class interviewController {
 
 	public interviewController(InterviewService interviewService, PdfService pdfService) {
 		this.interviewService = interviewService;
-        this.pdfService = pdfService;
-    }
+		this.pdfService = pdfService;
+	}
 
 	private final InterviewService interviewService;
 	private final PdfService pdfService;
@@ -55,10 +56,10 @@ public class interviewController {
 
 	@PostMapping(value = "/interview", consumes = "multipart/form-data")
 	public ResponseEntity<?> getInterview(
-			@Parameter(name = "file", description = "음성 데이터")
+		@Parameter(name = "file", description = "음성 데이터")
 		@RequestParam(value = "wav file") MultipartFile file,
-			@AuthenticationPrincipal UserDetails userDetails,
-			@RequestParam(value = "interviewId") Long id) {
+		@AuthenticationPrincipal UserDetails userDetails,
+		@RequestParam(value = "interviewId") Long id) {
 		try {
 			Path tempFile = Files.createTempFile("temp", ".wav");
 
@@ -80,6 +81,44 @@ public class interviewController {
 			return ResponseEntity.badRequest().body("Failed to process the file");
 		}
 	}
+
+	@PostMapping(value = "/interview/video", consumes = "multipart/form-data")
+	public ResponseEntity<?> getFaceInterview(
+		@RequestParam(value = "videoFile") MultipartFile videoFile,
+		@AuthenticationPrincipal UserDetails userDetails,
+		@RequestParam(value = "interviewId") Long id) {
+		try {
+			System.out.println("123");
+			// 1. 화상 파일 임시 저장
+			Path tempVideoFile = Files.createTempFile("temp_video", ".mp4");
+			videoFile.transferTo(tempVideoFile.toFile());
+
+			System.out.println("1234");
+			// 2. 오디오 추출
+			Path tempAudioFile = Files.createTempFile("temp_audio", ".wav");
+			VideoToAudioConverter.extractAudio(tempVideoFile, tempAudioFile);
+
+			System.out.println("tempAudioFile = " + tempAudioFile);
+			// 3. STT 처리
+			String result = interviewService.interview(tempAudioFile.toString(), id);
+
+			// 4. STT 결과를 TTS로 변환
+			byte[] audioData = interviewService.convertTextToSpeech(result);
+
+			// 5. 응답 반환
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+			headers.setContentDispositionFormData("attachment", "interview_response.wav");
+
+			return ResponseEntity.ok()
+				.headers(headers)
+				.body(audioData);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.badRequest().body("Failed to process the video file");
+		}
+	}
+
 
 	@PostMapping("")
 	public ResponseEntity<InterviewResponse> createInterview(@AuthenticationPrincipal UserDetails userDetails,

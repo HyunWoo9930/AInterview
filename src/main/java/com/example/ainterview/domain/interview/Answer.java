@@ -18,6 +18,7 @@ public class Answer {
 	private Long id;
 
 	@Lob
+	@Column(columnDefinition = "LONGTEXT")
 	private String content;
 
 	@OneToOne
